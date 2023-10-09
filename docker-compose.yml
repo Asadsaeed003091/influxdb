@@ -1,0 +1,64 @@
+version: '3.9'
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=kimono
+      - INFLUXDB_ADMIN_USER=kimono
+      - INFLUXDB_ADMIN_PASSWORD=kimono
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: always
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+    - influxdb
+    links:
+    - influxdb
+    ports:
+    - '8125:8125'
+    environment:
+    - INFLUX_TOKEN=vutBTrEvfuhFAWNw1FVrImG8_v09d-vvAJ32Dl-B4ZLG6ova5Lo8yjZKBsvMSWJrqs5GK1IzblpyZFnaW8lNuw==
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=kimono
+      - GF_SECURITY_ADMIN_PASSWORD=kimono
+      - GF_INSTALL_PLUGINS=
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+ 
+  mosquitto:
+    container_name: mqtt
+    image: eclipse-mosquitto
+    restart: always
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
+    ports:
+      - 1883:1883
+      - 9001:9001
+
+volumes:
+  grafana_data: 
+  influxdb_data:
+  config:
+  data:
+  log:
